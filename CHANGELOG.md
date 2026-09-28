@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/croffasia/itsaplan/compare/v1.2.1...v1.3.0) (2026-09-28)
+
+
+### Features
+
+* **web:** add issue copy submenu ([#451](https://github.com/croffasia/itsaplan/issues/451)) ([7cbaa78](https://github.com/croffasia/itsaplan/commit/7cbaa78672b578f8fc7082692fee3059c7b9c156))
+
 ## [1.2.1](https://github.com/croffasia/itsaplan/compare/v1.2.0...v1.2.1) (2026-09-26)
 
 
