@@ -18,3 +18,8 @@ apps/web/next-env.d.ts
 # Helm chart: the templates are Go templates, not YAML, and the values follow
 # Helm's own conventions. Checked by `helm lint`.
 charts
+
+# Agent scratch space (evidence dumps, redacted configs) — not source
+.scratch
+.octocode-lite
+.ccmux
