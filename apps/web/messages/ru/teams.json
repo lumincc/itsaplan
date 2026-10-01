@@ -515,7 +515,9 @@
     "noProjectsShort": "Нет проектов",
     "chatNeedsAgent": "Создайте ИИ-агента, чтобы протестировать его здесь.",
     "chatNeedsProject": "Добавьте ИИ-агента в проект, чтобы протестировать его здесь.",
-    "triggerFieldsTitle": "Кастомные поля, запускающие run"
+    "triggerFieldsTitle": "Кастомные поля, запускающие run",
+    "transcript": "Полный журнал",
+    "session": "Сессия"
   },
   "members": {
     "roleSaved": "{name} теперь {role}",

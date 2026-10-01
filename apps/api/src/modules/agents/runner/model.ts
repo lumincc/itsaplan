@@ -12,6 +12,11 @@ export const RunnerRunResponse = t.Object({
   attempts: t.Number(),
   issueId: t.Nullable(t.Number()),
   issueIdentifier: t.Nullable(t.String()),
+  transcriptSeq: t.Number({
+    description:
+      'Where this run’s transcript continues: number the attempt’s segments from here, ' +
+      'so a re-claimed run appends after what its earlier attempt stored.',
+  }),
 });
 
 // The claim result. The run is wrapped so an empty queue is an explicit null rather

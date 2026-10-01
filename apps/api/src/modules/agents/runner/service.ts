@@ -3,6 +3,7 @@ import { and, eq, sql } from 'drizzle-orm';
 import { type ContextUsage } from '../chat-usage';
 import { agentRunConfig, loadThreadContext } from '../core/run-queue';
 import { recordAgentRunFinished, recordAgentRunStarted } from '../core/run-activity';
+import { nextTranscriptSeq } from '../transcript/service';
 import type { AgentKind } from '../core/service';
 import type { AgentRunTrigger } from '../model';
 import {
@@ -84,6 +85,10 @@ export interface RunnerRun {
   // The issue's human-readable key ("MKT-42"), so the runner can name the work in its
   // log. Null for a run with no issue, or a deleted one.
   issueIdentifier: string | null;
+  // Where the run's transcript continues: the runner numbers this attempt's segments
+  // from here, so a re-claimed run appends after what the failed attempt stored rather
+  // than overwriting it from seq 0.
+  transcriptSeq: number;
 }
 
 // The claim's raw row, before framing. The extra people columns exist only to build
@@ -194,6 +199,7 @@ export async function claimRunnerRun(agent: RunnerAgent): Promise<RunnerRun | nu
     attempts: row.attempts,
     issueId: row.issueId,
     issueIdentifier: row.issueIdentifier,
+    transcriptSeq: await nextTranscriptSeq({ runId: row.id }),
   };
 }
 

@@ -89,6 +89,18 @@ export class AnswerStream {
     return this.sessionId;
   }
 
+  // A retry that starts the session anew: the session the failed attempt named is gone,
+  // so the next one the stream names is the one to report.
+  resetSession(): void {
+    this.sessionId = null;
+  }
+
+  // A line the runner adds to the answer itself, shown where the agent's words are: it
+  // is not the agent speaking, but it belongs in the transcript.
+  note(text: string): void {
+    this.appendText(`${text}\n\n`);
+  }
+
   // The size of the conversation's context after this answer, as the reader saw it.
   contextUsage(): ContextUsage | null | undefined {
     return this.usage.value();

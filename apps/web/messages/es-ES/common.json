@@ -120,7 +120,8 @@
     "importConfirmed": "Se {count, plural, one {ha creado # ticket} other {han creado # tickets}}",
     "importSkippedRow": "Fila saltada {row}: {reason}",
     "contextSize": "Contexto de la conversación: {count, plural, one {# token} other {# tokens}}",
-    "contextUnavailable": "El tamaño del contexto no está disponible para este agente"
+    "contextUnavailable": "El tamaño del contexto no está disponible para este agente",
+    "rawTranscript": "Registro sin procesar"
   },
   "share": {
     "createFailed": "No se ha podido crear el enlace. Inténtalo otra vez.",
@@ -211,5 +212,13 @@
     "page": "Página {number}",
     "perPage": "por página",
     "range": "{first}-{last} de {total}"
+  },
+  "transcript": {
+    "segment": "segmento {seq} · {count, plural, one {# línea} other {# líneas}}",
+    "loadMore": "Cargar más",
+    "end": "Fin del registro",
+    "empty": "No hay ningún registro guardado.",
+    "loading": "Cargando…",
+    "loadFailed": "No se pudo cargar el registro."
   }
 }

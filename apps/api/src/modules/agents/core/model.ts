@@ -168,6 +168,16 @@ export const AgentRunResponse = t.Object({
   attempts: t.Number(),
   lastError: t.Nullable(t.String()),
   output: t.Nullable(t.String()),
+  cliSessionId: t.Nullable(
+    t.String({
+      description:
+        'The coding agent session this run used, reported by its runner with the ' +
+        'transcript. Null until one is reported.',
+    }),
+  ),
+  hasTranscript: t.Optional(
+    t.Boolean({ description: 'Whether the run’s raw output was recorded.' }),
+  ),
   contextTokens: runContextTokens,
   nextAttemptAt: t.String(),
   createdAt: t.String(),
@@ -237,6 +247,7 @@ export const ChatMessagesResponse = t.Object({
       parts: t.Array(ChatPartResponse),
       createdAt: t.String(),
       stopped: t.Optional(t.Boolean()),
+      hasTranscript: t.Optional(t.Boolean()),
     }),
   ),
   nextPage: t.Nullable(t.Number()),

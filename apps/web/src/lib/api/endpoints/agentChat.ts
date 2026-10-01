@@ -1,5 +1,5 @@
-import { API_URL, apiFailure, request } from '@/lib/api/core/client';
-import type { AgentRunEvent } from '@/lib/api/endpoints/agents';
+import { API_URL, ApiError, apiFailure, request } from '@/lib/api/core/client';
+import type { AgentRunEvent, AiTranscriptPage } from '@/lib/api/endpoints/agents';
 
 // The frames of one SSE connection: separated by a blank line, each carrying a single
 // JSON-encoded event on its `data:` line and, on a resumable stream, the `id:` a
@@ -216,12 +216,15 @@ export type AiChatPart = { type: 'text'; text: string } | AiChatToolPart;
 
 // One restored message of a chat thread's transcript. `stopped` marks an answer the
 // member ended part-way: what the agent had written by then is all there is.
+// `hasTranscript` marks an answer whose raw output was recorded by the runner, which
+// is what makes its full record viewable.
 export interface AiChatMessage {
   id: string;
   role: 'user' | 'assistant';
   parts: AiChatPart[];
   createdAt: string;
   stopped?: boolean;
+  hasTranscript?: boolean;
 }
 
 export interface AiChatThreadPage {
@@ -295,3 +298,27 @@ export const deleteAiAgentThread = (projectKey: string, agentId: number, threadI
     `/projects/${projectKey}/ai-agents/${agentId}/threads/${encodeURIComponent(threadId)}`,
     { method: 'DELETE' },
   );
+
+// Clears the coding agent session this thread is bound to on its runner's machine. The
+// next message starts a session anew over the framed conversation; the transcript of
+// every earlier answer stays readable.
+export const resetAiAgentThreadSession = (projectKey: string, agentId: number, threadId: string) =>
+  request<void>(
+    `/projects/${projectKey}/ai-agents/${agentId}/threads/${encodeURIComponent(threadId)}/session`,
+    { method: 'DELETE' },
+  );
+
+// One segment of an answer's raw transcript after `after`. Null when the answer has no
+// segment past it.
+export const getAiAgentChatTranscript = (
+  projectKey: string,
+  agentId: number,
+  messageId: number,
+  after: number | null,
+) =>
+  request<AiTranscriptPage>(
+    `/projects/${projectKey}/ai-agents/${agentId}/chat/${messageId}/transcript?after=${after ?? 0}`,
+  ).catch((err) => {
+    if (err instanceof ApiError && err.status === 404) return null;
+    throw err;
+  });

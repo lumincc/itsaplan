@@ -120,7 +120,8 @@
     "importConfirmed": "{count, plural, one {Создана # задача} few {Создано # задачи} many {Создано # задач} other {Создано # задач}}",
     "importSkippedRow": "Строка {row} пропущена: {reason}",
     "contextSize": "Контекст диалога: {count, plural, one {# токен} few {# токена} many {# токенов} other {# токена}}",
-    "contextUnavailable": "Размер контекста для этого агента недоступен"
+    "contextUnavailable": "Размер контекста для этого агента недоступен",
+    "rawTranscript": "Полный журнал"
   },
   "share": {
     "createFailed": "Не удалось создать ссылку. Попробуйте ещё раз.",
@@ -211,5 +212,13 @@
     "page": "Страница {number}",
     "perPage": "на странице",
     "range": "{first}-{last} из {total}"
+  },
+  "transcript": {
+    "segment": "сегмент {seq} · {count, plural, one {# строка} few {# строки} many {# строк} other {# строк}}",
+    "loadMore": "Загрузить ещё",
+    "end": "Конец журнала",
+    "empty": "Журнал не записан.",
+    "loading": "Загрузка…",
+    "loadFailed": "Не удалось загрузить журнал."
   }
 }

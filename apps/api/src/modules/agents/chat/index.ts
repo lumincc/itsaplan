@@ -188,7 +188,9 @@ export const agentChatRoutes = new Elysia({ name: 'agent-chat', detail: { tags: 
     async ({ agent, params, body }) => {
       const ack = await appendEvents(agent.id, params.messageId, body.events);
       if (!ack) throw new HttpError(404, 'Message not found');
-      if (body.sessionId) await setThreadSession(agent.id, params.messageId, body.sessionId);
+      if (body.sessionId) {
+        await setThreadSession(agent.id, params.messageId, body.sessionId, body.rebind === true);
+      }
       return ack;
     },
     {

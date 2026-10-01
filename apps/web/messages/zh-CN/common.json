@@ -120,7 +120,8 @@
     "importConfirmed": "已创建 {count} 个任务",
     "importSkippedRow": "已跳过第 {row} 行：{reason}",
     "contextSize": "对话上下文：{count, plural, other {# 个 token}}",
-    "contextUnavailable": "该智能体不提供上下文大小"
+    "contextUnavailable": "该智能体不提供上下文大小",
+    "rawTranscript": "原始记录"
   },
   "share": {
     "createFailed": "无法创建链接，请重试。",
@@ -211,5 +212,13 @@
     "page": "第 {number} 页",
     "perPage": "每页",
     "range": "第 {first}-{last} 项，共 {total} 项"
+  },
+  "transcript": {
+    "segment": "第 {seq} 段 · {count, plural, other {# 行}}",
+    "loadMore": "加载更多",
+    "end": "已到记录末尾",
+    "empty": "没有已记录的原始输出。",
+    "loading": "加载中…",
+    "loadFailed": "无法加载原始记录。"
   }
 }

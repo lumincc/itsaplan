@@ -27,5 +27,7 @@
   "noModel": "No model set",
   "copySession": "Copy session id",
   "sessionLabel": "Local session id",
-  "sessionHint": "The session the agent's runner keeps on its own machine. Resume it there to read the full transcript with its tool calls."
+  "sessionHint": "The session the agent's runner keeps on its own machine. Resume it there to read the full transcript with its tool calls.",
+  "resetSession": "Start a new session",
+  "resetSessionHint": "The next message starts a new coding agent session, with the conversation rebuilt from the stored transcript. The old session stays on the runner's machine."
 }

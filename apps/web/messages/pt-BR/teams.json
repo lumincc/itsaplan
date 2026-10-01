@@ -515,7 +515,9 @@
     "noProjectsShort": "Nenhum projeto",
     "chatNeedsAgent": "Crie o agente de IA para testá-lo aqui.",
     "chatNeedsProject": "Anexe o agente de IA a um projeto para testá-lo aqui.",
-    "triggerFieldsTitle": "Campos personalizados que iniciam uma execução"
+    "triggerFieldsTitle": "Campos personalizados que iniciam uma execução",
+    "transcript": "Transcrição bruta",
+    "session": "Sessão"
   },
   "members": {
     "roleSaved": "{name} agora é {role}",

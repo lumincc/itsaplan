@@ -62,6 +62,7 @@ import {
   deleteThread as deleteExternalThread,
   renameThread as renameExternalThread,
   ownsThread as ownsExternalThread,
+  resetThreadSession as resetExternalThreadSession,
 } from '../chat/service';
 
 // Run options for an interactive chat run (the test chat): the caller owns the memory
@@ -524,6 +525,37 @@ export const aiAgentRoutes = new Elysia({ name: 'ai-agents', detail: { tags: ['A
       permission: ['ai_agents', 'read'],
       response: { 204: t.Void(), ...commonErrors },
       detail: { summary: 'Rename a chat thread' },
+    },
+  )
+
+  // Clears the session an external agent's thread is bound to. The next message is
+  // answered by a session started anew, over the framed conversation; the transcript
+  // of every earlier answer stays readable. An internal agent runs in this process and
+  // has no session to clear. Scoped the same way as renaming.
+  .delete(
+    '/projects/:projectKey/ai-agents/:agentId/threads/:threadId/session',
+    async ({ params, project, user }) => {
+      const caller = requireUser(user);
+      const agent = await getAgentInProject(params.agentId, project.id);
+      if (!agent) throw new HttpError(404, 'Agent not found');
+      if (agent.kind !== 'external') {
+        throw new HttpError(400, 'Only an external agent keeps a runner session');
+      }
+      const reset = await resetExternalThreadSession(params.threadId, caller.id);
+      if (!reset) throw new HttpError(404, 'Thread not found');
+      return noContent();
+    },
+    {
+      params: threadParams,
+      permission: ['ai_agents', 'read'],
+      response: { 204: t.Void(), ...commonErrors },
+      detail: {
+        summary: 'Start a new chat session',
+        description:
+          'Clear the coding agent session this thread is bound to on its runner’s ' +
+          'machine. The next message is sent with the framed conversation instead of a ' +
+          'resume, and binds whatever session its runner then starts.',
+      },
     },
   )
 

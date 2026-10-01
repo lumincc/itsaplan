@@ -120,7 +120,8 @@
     "importConfirmed": "{count, plural, one {# ticket créé} other {# tickets créés}}",
     "importSkippedRow": "Ligne {row} ignorée : {reason}",
     "contextSize": "Contexte de la conversation : {count, plural, one {# token} other {# tokens}}",
-    "contextUnavailable": "La taille du contexte n'est pas disponible pour cet agent"
+    "contextUnavailable": "La taille du contexte n'est pas disponible pour cet agent",
+    "rawTranscript": "Transcription brute"
   },
   "share": {
     "createFailed": "Impossible de créer le lien. Réessayez.",
@@ -211,5 +212,13 @@
     "page": "Page {number}",
     "perPage": "par page",
     "range": "{first}-{last} sur {total}"
+  },
+  "transcript": {
+    "segment": "segment {seq} · {count, plural, one {# ligne} other {# lignes}}",
+    "loadMore": "Charger plus",
+    "end": "Fin de la transcription",
+    "empty": "Aucune transcription enregistrée.",
+    "loading": "Chargement…",
+    "loadFailed": "Impossible de charger la transcription."
   }
 }

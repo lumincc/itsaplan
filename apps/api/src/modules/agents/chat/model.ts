@@ -143,6 +143,9 @@ export const ChatEventsResponse = t.Object({
 // The claimed answer, or null when the agent has nothing waiting. `prompt` carries the
 // conversation so far, framed the same way a run's task is — except when `sessionId` is
 // set, where the runner's session already holds it and only the new message is sent.
+// `freshPrompt` and `freshSystemPrompt` are that framed pair regardless: what a runner
+// falls back to when it cannot resume `sessionId`, starting the answer over a session
+// built anew from the stored conversation.
 export const ClaimChatResponse = t.Object({
   message: t.Nullable(
     t.Object({
@@ -150,6 +153,12 @@ export const ClaimChatResponse = t.Object({
       threadId: t.String(),
       prompt: t.String(),
       systemPrompt: t.String(),
+      freshPrompt: t.String({
+        description: 'The framed conversation for a session started anew.',
+      }),
+      freshSystemPrompt: t.String({
+        description: 'The system prompt for a session started anew.',
+      }),
       attempts: t.Number(),
       sessionId: t.Nullable(
         t.String({
@@ -158,6 +167,11 @@ export const ClaimChatResponse = t.Object({
             'Null when there is none yet: start a fresh one and report the id it got.',
         }),
       ),
+      transcriptSeq: t.Number({
+        description:
+          'Where this answer’s transcript continues: number the attempt’s segments ' +
+          'from here, so a re-claimed answer appends after what its earlier attempt stored.',
+      }),
     }),
   ),
 });
@@ -170,6 +184,13 @@ export const chatEventsBody = t.Object({
       description:
         'The session the runner started for this thread, reported once so later messages ' +
         'in it resume that session instead of being sent the conversation again.',
+    }),
+  ),
+  rebind: t.Optional(
+    t.Boolean({
+      description:
+        'With `sessionId`: overwrite the binding the thread already holds. For the ' +
+        'fallback after a resume that failed, whose recorded session is dead.',
     }),
   ),
 });

@@ -515,7 +515,9 @@
     "noProjectsShort": "No projects",
     "chatNeedsAgent": "Create the AI agent to test it here.",
     "chatNeedsProject": "Attach the AI agent to a project to test it here.",
-    "triggerFieldsTitle": "Custom fields that start a run"
+    "triggerFieldsTitle": "Custom fields that start a run",
+    "transcript": "Raw transcript",
+    "session": "Session"
   },
   "members": {
     "roleSaved": "{name} is now {role}",

@@ -27,5 +27,7 @@
   "noModel": "Model belum diatur",
   "copySession": "Salin ID sesi",
   "sessionLabel": "ID sesi lokal",
-  "sessionHint": "Sesi yang disimpan runner agen di mesinnya sendiri. Lanjutkan di sana untuk membaca transkrip lengkap beserta pemanggilan alatnya."
+  "sessionHint": "Sesi yang disimpan runner agen di mesinnya sendiri. Lanjutkan di sana untuk membaca transkrip lengkap beserta pemanggilan alatnya.",
+  "resetSession": "Mulai sesi baru",
+  "resetSessionHint": "Pesan berikutnya memulai sesi agen pengodean baru, dengan percakapan dibangun ulang dari transkrip tersimpan. Sesi lama tetap di mesin runner."
 }

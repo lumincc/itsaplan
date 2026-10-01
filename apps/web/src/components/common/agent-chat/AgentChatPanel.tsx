@@ -152,6 +152,7 @@ export function AgentChatPanel({
               hasEarlierMessages={hasEarlierMessages}
               isLoadingEarlier={isLoadingEarlier}
               onLoadEarlier={onLoadEarlier}
+              transcript={projectKey ? { projectKey, agentId: agent.id } : undefined}
             />
           )}
         </div>

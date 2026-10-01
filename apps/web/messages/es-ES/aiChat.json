@@ -27,5 +27,7 @@
   "noModel": "No hay modelo definido",
   "copySession": "Copiar el ID de sesión",
   "sessionLabel": "ID de sesión local",
-  "sessionHint": "La sesión que el ejecutor del agente guarda en su propia máquina. Retómala allí para leer la transcripción completa con sus llamadas a herramientas."
+  "sessionHint": "La sesión que el ejecutor del agente guarda en su propia máquina. Retómala allí para leer la transcripción completa con sus llamadas a herramientas.",
+  "resetSession": "Iniciar una nueva sesión",
+  "resetSessionHint": "El próximo mensaje inicia una sesión nueva del agente, con la conversación reconstruida a partir del registro guardado. La sesión anterior permanece en la máquina del runner."
 }

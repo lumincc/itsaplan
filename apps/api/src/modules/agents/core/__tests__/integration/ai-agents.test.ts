@@ -914,8 +914,9 @@ describe('ai agents', () => {
   });
 
   // An agent is set up and talked to entirely over MCP. What stays out serves the chat
-  // UI: the streamed run and the caller's own thread history, plus this agent's run
-  // history — the analytics routes carry the project-wide run feed MCP reads instead.
+  // UI: the streamed run, the caller's own thread history and its raw transcripts, plus
+  // this agent's run history and its raw transcripts — the analytics routes carry the
+  // project-wide run feed MCP reads instead.
   it('exposes agent management and the run to MCP', () => {
     const untagged = untaggedRoutes((route) => route.includes('/ai-agents'));
     expect(untagged).toEqual([
@@ -926,11 +927,14 @@ describe('ai agents', () => {
       'DELETE /projects/:projectKey/ai-agents/:agentId/threads/:threadId/favorite',
       'GET /projects/:projectKey/ai-agents/:agentId/threads/:threadId/messages',
       'PATCH /projects/:projectKey/ai-agents/:agentId/threads/:threadId',
+      'DELETE /projects/:projectKey/ai-agents/:agentId/threads/:threadId/session',
       'DELETE /projects/:projectKey/ai-agents/:agentId/threads/:threadId',
       'POST /projects/:projectKey/ai-agents/:agentId/chat',
       'GET /projects/:projectKey/ai-agents/:agentId/chat/:messageId/events',
       'GET /projects/:projectKey/ai-agents/:agentId/chat/:messageId/stream',
       'POST /projects/:projectKey/ai-agents/:agentId/chat/:messageId/cancel',
+      'GET /teams/:teamId/ai-agents/:agentId/runs/:runId/transcript',
+      'GET /projects/:projectKey/ai-agents/:agentId/chat/:messageId/transcript',
     ]);
   });
 });

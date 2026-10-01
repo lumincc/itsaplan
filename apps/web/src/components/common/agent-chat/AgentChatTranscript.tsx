@@ -28,6 +28,7 @@ export function AgentChatTranscript({
   hasEarlierMessages = false,
   isLoadingEarlier = false,
   onLoadEarlier,
+  transcript,
 }: {
   messages: ChatMessage[];
   status: ChatStatus;
@@ -37,6 +38,8 @@ export function AgentChatTranscript({
   hasEarlierMessages?: boolean;
   isLoadingEarlier?: boolean;
   onLoadEarlier?: () => void;
+  // Where the answers' raw transcripts are read from, handed to each message.
+  transcript?: { projectKey: string; agentId: number };
 }) {
   const t = useTranslations('common.agentChat');
 
@@ -99,6 +102,7 @@ export function AgentChatTranscript({
                 message={message}
                 complete={status === 'ready' || index < messages.length - 1}
                 showDate={!previous || dayKey(previous.createdAt) !== dayKey(message.createdAt)}
+                transcript={transcript}
               />
             );
           })}
