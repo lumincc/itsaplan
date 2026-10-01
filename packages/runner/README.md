@@ -149,6 +149,29 @@ options describe every agent at once; an entry has priority over them.
 
 An agent whose key the instance refuses stops on its own, and the others keep working.
 
+## One task per run (`--once`)
+
+`--once` turns the loops off: the runner makes one claim pass, works what it gets, and
+exits. `--wait <ms>` is how long that pass may wait for a chat message when no queued
+run is due — without it, an empty run feed ends the pass at once. A config listing
+several agents runs one pass per agent, in the file's order.
+
+```sh
+itsaplan-runner --once                # one pass: a due run, or nothing
+itsaplan-runner --once --wait 60000   # … or up to a minute of chat work
+```
+
+The exit code says what the pass did, for the log a CI job keeps:
+
+- `0` — nothing was due, or the task succeeded (a chat answer the member stopped counts
+  as neither failed nor succeeded, and exits `0`);
+- `1` — the task failed, or the runner could not reach the instance or its key was
+  refused.
+
+The code is a report, not an instruction: a retry is the instance's to order — it holds
+the attempts and the lease — so a CI job that fails is left failed, and the next pass
+picks the task back up with the transcript continuing where the failed attempt left it.
+
 ## Settings
 
 The runner reads `./itsaplan-runner.json`. For a different file, give the path as an

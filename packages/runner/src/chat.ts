@@ -7,7 +7,8 @@ import { TranscriptRecorder } from './transcript';
 
 // The command is the same one that handles a queued run; what differs is that its output
 // is reported while it is still being written, so the person waiting in the chat reads
-// the answer as it appears.
+// the answer as it appears. What it returns is the outcome as it was reported, the
+// handler's exit-code mapping in tasks.ts being its only reader.
 //
 // A thread with no session yet is answered by a command started without one, and the
 // session it reports is sent with the first batch of events after it is named, which
@@ -33,7 +34,7 @@ export async function answer(
   client: Client,
   message: ChatMessage,
   stop: AbortController,
-): Promise<void> {
+): Promise<'success' | 'failed' | 'stopped'> {
   // Reported once: repeating it on every batch is a field the server has to ignore.
   let reported = message.sessionId !== null;
   // True while the session a report carries replaces a dead one rather than filling an
@@ -106,16 +107,17 @@ export async function answer(
     // and changes nothing reported below.
     await transcript.close();
   }
-  if (stop.signal.aborted) return;
+  if (stop.signal.aborted) return 'stopped';
   // The context size is read after the stream is closed, which is where the last line of
   // the output is parsed. An answer that failed reports it too: what the command read
   // before it broke is still the size of its session's context.
   if (outcome.status === 'success') {
     await stream.finish(outcome.output);
     await client.chatResult(message.id, { status: 'success', usage: stream.contextUsage() });
-    return;
+    return 'success';
   }
   const error = outcome.error ?? 'The command failed';
   await stream.fail(error, outcome.output);
   await client.chatResult(message.id, { status: 'failed', error, usage: stream.contextUsage() });
+  return 'failed';
 }
