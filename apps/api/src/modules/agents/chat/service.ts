@@ -17,6 +17,11 @@ import { attachmentPreamble, chartPreamble, projectsPreamble } from '../core/pro
 import { peoplePreamble, type Person } from '../core/prompt/run-context';
 import type { ChatMessagePage, ChatPart, ChatThreadPage } from '../model';
 import { newChatThreadId } from '../core/runtime/thread-ids';
+import {
+  messagesWithTranscript,
+  nextTranscriptSeq,
+  purgeThreadTranscripts,
+} from '../transcript/service';
 import { touchRunner, type RunnerAgent } from '../runner/service';
 import type { AgUiEventBody, ChatMessageStatus } from './model';
 
@@ -218,9 +223,9 @@ export async function getThreadMessages(
     .offset(page * PAGE_SIZE);
   const hasMore = rows.length > PAGE_SIZE;
   const turns = (hasMore ? rows.slice(0, PAGE_SIZE) : rows).reverse();
-  const answers = await readAnswerParts(
-    turns.filter((r) => r.role === 'assistant').map((r) => r.id),
-  );
+  const answerIds = turns.filter((r) => r.role === 'assistant').map((r) => r.id);
+  const answers = await readAnswerParts(answerIds);
+  const transcripts = await messagesWithTranscript(answerIds);
   const items = turns
     .map((r) => ({
       id: String(r.id),
@@ -231,6 +236,7 @@ export async function getThreadMessages(
           : [{ type: 'text' as const, text: r.content }],
       createdAt: iso(r.createdAt),
       ...(r.status === 'canceled' ? { stopped: true } : {}),
+      ...(r.role === 'assistant' && transcripts.has(r.id) ? { hasTranscript: true } : {}),
     }))
     // An answer whose runner has reported nothing yet has nothing to show; the browser
     // is streaming it.
@@ -321,6 +327,8 @@ export async function renameThread(
 }
 
 export async function deleteThread(threadId: string, userId: string): Promise<boolean> {
+  // The answers' transcript objects are read before the cascade takes their index rows.
+  await purgeThreadTranscripts(threadId, userId);
   const rows = await db
     .delete(agentChatThread)
     .where(and(eq(agentChatThread.id, threadId), eq(agentChatThread.userId, userId)))
@@ -382,8 +390,17 @@ export interface ClaimedChat {
   threadId: string;
   prompt: string;
   systemPrompt: string;
+  // The framed-task pair for a session started anew, which is what a runner falls back
+  // to when it cannot resume `sessionId`. Equal to prompt/systemPrompt on a thread with
+  // no session.
+  freshPrompt: string;
+  freshSystemPrompt: string;
   attempts: number;
   sessionId: string | null;
+  // Where the answer's transcript continues: the runner numbers this attempt's segments
+  // from here, so a re-claimed answer appends after what the failed attempt stored
+  // rather than overwriting it from seq 0.
+  transcriptSeq: number;
 }
 
 // The claim's raw row: the answer plus what the prompts are built from.
@@ -466,41 +483,52 @@ async function claimMessage(agent: RunnerAgent): Promise<ClaimedChat | null> {
   const row = (rows as unknown as ClaimedRow[])[0];
   if (!row) return null;
   await db.delete(agentChatEvent).where(eq(agentChatEvent.messageId, row.id));
-  // A thread bound to a live session on the runner's machine needs neither the earlier
-  // turns nor the system prompt again: that session already holds both, in fuller form
-  // than the transcript here keeps them.
-  const resumed = row.sessionId !== null;
-  const history = await readHistory(row.threadId, row.id, resumed);
+  // The transcript is not cleared the way the events are: it is the full record of
+  // everything written, failed attempts included, so the re-claim continues the stream
+  // instead of restarting it.
+  const transcriptSeq = await nextTranscriptSeq({ messageId: row.id });
+  // A thread bound to a live session on the runner's machine is sent only the new
+  // message: that session already holds the conversation, in fuller form than the
+  // transcript here keeps it. The framed history is built anyway, as the payload a
+  // runner falls back to when it cannot resume that session.
+  const systemPrompt = buildSystemPrompt(agent, {
+    name: row.requesterName ?? 'the member',
+    username: row.requesterUsername,
+  });
+  const history = await readHistory(row.threadId, row.id);
   const question = history.pop()?.content ?? '';
+  const freshPrompt = frameChatPrompt(history, question);
+  const resumed = row.sessionId !== null;
   return {
     id: row.id,
     threadId: row.threadId,
-    prompt: resumed ? question : frameChatPrompt(history, question),
-    systemPrompt: resumed
-      ? ''
-      : buildSystemPrompt(agent, {
-          name: row.requesterName ?? 'the member',
-          username: row.requesterUsername,
-        }),
+    prompt: resumed ? question : freshPrompt,
+    systemPrompt: resumed ? '' : systemPrompt,
+    freshPrompt,
+    freshSystemPrompt: systemPrompt,
     attempts: row.attempts,
     sessionId: row.sessionId,
+    transcriptSeq,
   };
 }
 
 // Binds a thread to the session its runner started, addressed through the answer being
 // produced so the runner needs no separate lookup. The first report wins: a retry of the
 // same answer starts a new session, and rebinding would strand the one already recorded.
+// `rebind` overwrites anyway — the fallback after a resume that failed, whose recorded
+// session is dead and worth replacing.
 export async function setThreadSession(
   agentId: number,
   messageId: number,
   sessionId: string,
+  rebind = false,
 ): Promise<void> {
   await db
     .update(agentChatThread)
     .set({ cliSessionId: sessionId })
     .where(
       and(
-        sql`${agentChatThread.cliSessionId} IS NULL`,
+        ...(rebind ? [] : [sql`${agentChatThread.cliSessionId} IS NULL`]),
         inArray(
           agentChatThread.id,
           db
@@ -512,13 +540,24 @@ export async function setThreadSession(
     );
 }
 
+// Clears the session a thread is bound to, which is what "start a new session" does:
+// the next message is sent with the framed history instead of a resume, and the session
+// its runner then starts is bound the usual way. The transcript stays — it is kept per
+// answer, not per session. False when the thread is not the caller's.
+export async function resetThreadSession(threadId: string, userId: string): Promise<boolean> {
+  const rows = await db
+    .update(agentChatThread)
+    .set({ cliSessionId: null })
+    .where(and(eq(agentChatThread.id, threadId), eq(agentChatThread.userId, userId)))
+    .returning({ id: agentChatThread.id });
+  return rows.length > 0;
+}
+
 // The turns before the claimed answer, oldest last, capped at the configured depth. The
-// last of them is the message being answered. `questionOnly` takes just that one, for a
-// thread whose session already remembers everything before it.
+// last of them is the message being answered.
 async function readHistory(
   threadId: string,
   beforeMessageId: number,
-  questionOnly: boolean,
 ): Promise<{ role: string; content: string }[]> {
   const rows = await db
     .select({ role: agentChatMessage.role, content: agentChatMessage.content })
@@ -531,7 +570,7 @@ async function readHistory(
       ),
     )
     .orderBy(desc(agentChatMessage.id))
-    .limit(questionOnly ? 1 : agentChatConfig.historyMessages());
+    .limit(agentChatConfig.historyMessages());
   return rows.reverse();
 }
 

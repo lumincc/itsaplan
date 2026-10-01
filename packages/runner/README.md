@@ -252,8 +252,18 @@ Without a session the server sends the last 20 messages of the conversation as p
 - The chat header shows the session id. Run `claude --resume <id>` in the runner's working
   directory to open the same session in your terminal.
 - Your own `command` keeps no session. Each chat message then includes the conversation.
-- A session stays on the machine that started it. If you delete its files or move the
-  runner, the answers fail. Start a new chat then.
+- A session stays on the machine that started it. When it cannot be resumed — its files
+  were deleted, the runner moved — the runner answers once more in a session started anew,
+  with the conversation rebuilt from what the server stored, and says so in the answer.
+  "Start a new session" in the chat header clears the binding on purpose: the next message
+  opens a fresh session while the conversation and its records stay.
+
+### Transcripts
+
+Everything the command prints is uploaded to the instance as it runs — the raw stream,
+before any parsing, kept in segments next to the run or the answer it belongs to. The
+instance shows it under the answer and in the run history. An upload that fails is logged
+by the runner and skipped; it never fails the run it records.
 
 ## Requirements
 

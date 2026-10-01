@@ -515,7 +515,9 @@
     "noProjectsShort": "Aucun projet",
     "chatNeedsAgent": "Créez l'agent IA pour le tester ici.",
     "chatNeedsProject": "Rattachez l'agent IA à un projet pour le tester ici.",
-    "triggerFieldsTitle": "Champs personnalisés qui démarrent une exécution"
+    "triggerFieldsTitle": "Champs personnalisés qui démarrent une exécution",
+    "transcript": "Transcription brute",
+    "session": "Session"
   },
   "members": {
     "roleSaved": "{name} est maintenant {role}",

@@ -11,17 +11,36 @@ export interface Run {
   systemPrompt: string;
   issueId: number | null;
   issueIdentifier: string | null;
+  // Where the run's transcript continues. A run handed out again — its lease expired —
+  // numbers its segments from here, so both attempts are kept in order.
+  transcriptSeq: number;
 }
 
 // `prompt` carries the conversation so far framed into a task — unless `sessionId` is set,
 // where the coding agent session already holds it and only the new message is sent. Null
-// there means no session yet: start one and report the id it got.
+// there means no session yet: start one and report the id it got. `freshPrompt` and
+// `freshSystemPrompt` are the framed-task pair for a session started anew — the fallback
+// for a resume that fails, where the history is rebuilt from the stored conversation.
 export interface ChatMessage {
   id: number;
   threadId: string;
   prompt: string;
   systemPrompt: string;
+  freshPrompt: string;
+  freshSystemPrompt: string;
   sessionId: string | null;
+  // Where the answer's transcript continues, the run claim's counterpart: an answer
+  // handed out again keeps appending after what the failed attempt stored.
+  transcriptSeq: number;
+}
+
+// One segment of the raw output of a run or an answer, recorded before any parsing.
+// `sessionId` rides along when the recorded lines named one.
+export interface TranscriptSegmentBody {
+  harness: string;
+  seq: number;
+  lines: string[];
+  sessionId?: string | null;
 }
 
 // None of these calls does real work on the server, so a request that hangs is a dead
@@ -93,6 +112,12 @@ export class Client {
     await this.post(`/agent-runs/${runId}/result`, result);
   }
 
+  // Records one segment of a run's raw output. Failures are the caller's to log, not
+  // act on: a transcript that does not arrive never fails the run it belongs to.
+  async runTranscript(runId: number, body: TranscriptSegmentBody): Promise<void> {
+    await this.post(`/agent-runs/${runId}/transcript`, body);
+  }
+
   async claimChat(): Promise<ChatMessage | null> {
     const res = await this.post('/agent-chats/claim', undefined, CHAT_CLAIM_TIMEOUT_MS);
     const body = (await res.json()) as { message: ChatMessage | null };
@@ -101,11 +126,19 @@ export class Client {
 
   // `sessionId` binds the thread to that session for every later message in it. True
   // when the member stopped the answer: the server has no connection to this machine, so
-  // the stop is returned on the calls the runner already makes.
-  async chatEvents(messageId: number, events: AgUiEvent[], sessionId?: string): Promise<boolean> {
+  // the stop is returned on the calls the runner already makes. `rebind` has the server
+  // overwrite a binding the thread already holds — the fallback after a failed resume,
+  // whose old session is dead.
+  async chatEvents(
+    messageId: number,
+    events: AgUiEvent[],
+    sessionId?: string,
+    rebind?: boolean,
+  ): Promise<boolean> {
     const res = await this.post(`/agent-chats/${messageId}/events`, {
       events,
       ...(sessionId && { sessionId }),
+      ...(sessionId && rebind && { rebind: true }),
     });
     return canceled(res);
   }
@@ -123,6 +156,11 @@ export class Client {
     result: { status: 'success' | 'failed'; error?: string; usage?: ContextUsage | null },
   ): Promise<void> {
     await this.post(`/agent-chats/${messageId}/result`, result);
+  }
+
+  // Records one segment of an answer's raw output, the run counterpart's twin.
+  async chatTranscript(messageId: number, body: TranscriptSegmentBody): Promise<void> {
+    await this.post(`/agent-chats/${messageId}/transcript`, body);
   }
 }
 

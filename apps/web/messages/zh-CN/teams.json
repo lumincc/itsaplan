@@ -515,7 +515,9 @@
     "noProjectsShort": "无项目",
     "chatNeedsAgent": "创建 AI 代理后即可在此测试。",
     "chatNeedsProject": "将 AI 代理加入项目后即可在此测试。",
-    "triggerFieldsTitle": "触发运行的自定义字段"
+    "triggerFieldsTitle": "触发运行的自定义字段",
+    "transcript": "原始记录",
+    "session": "会话"
   },
   "members": {
     "roleSaved": "{name} 现在是{role}",

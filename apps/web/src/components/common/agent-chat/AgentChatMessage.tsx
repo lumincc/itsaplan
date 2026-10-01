@@ -3,8 +3,10 @@
 import type { ChatMessage } from '@/hooks/useAgentChat';
 import { cn } from '@/lib/utils';
 import type { AiChatPart, AiChatToolPart } from '@/lib/api/endpoints/agentChat';
+import { getAiAgentChatTranscript } from '@/lib/api/endpoints/agentChat';
 import { formatLongDate, formatTime } from '@/utils/dates';
 import Markdown from '@/components/common/Markdown';
+import { RawTranscriptDisclosure } from '@/components/common/RawTranscriptDisclosure';
 import { Bubble, BubbleContent } from '@/components/ui/bubble';
 import { Marker, MarkerContent } from '@/components/ui/marker';
 import { Message, MessageContent, MessageFooter } from '@/components/ui/message';
@@ -35,10 +37,14 @@ export default function AgentChatMessage({
   message,
   showDate,
   complete = true,
+  transcript,
 }: {
   message: ChatMessage;
   showDate: boolean;
   complete?: boolean;
+  // Where the answer's raw transcript is read from, when the panel is hosted in a
+  // project. Absent when the host has no project to read it through.
+  transcript?: { projectKey: string; agentId: number };
 }) {
   const t = useTranslations('common.agentChat');
   const isUser = message.role === 'user';
@@ -72,6 +78,19 @@ export default function AgentChatMessage({
             )}
           </Bubble>
           {message.error && <p className="text-xs text-destructive">{message.error}</p>}
+          {!isUser && message.hasTranscript && transcript && (
+            <RawTranscriptDisclosure
+              label={t('rawTranscript')}
+              load={(after) =>
+                getAiAgentChatTranscript(
+                  transcript.projectKey,
+                  transcript.agentId,
+                  Number(message.id),
+                  after,
+                )
+              }
+            />
+          )}
           <MessageFooter>
             {message.stopped
               ? `${t('stopped')} · ${formatTime(message.createdAt)}`

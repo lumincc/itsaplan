@@ -515,7 +515,9 @@
     "noProjectsShort": "Tidak ada proyek",
     "chatNeedsAgent": "Buat agen AI untuk mengujinya di sini.",
     "chatNeedsProject": "Lampirkan agen AI ke sebuah proyek untuk mengujinya di sini.",
-    "triggerFieldsTitle": "Bidang kustom yang memulai eksekusi"
+    "triggerFieldsTitle": "Bidang kustom yang memulai eksekusi",
+    "transcript": "Transkrip mentah",
+    "session": "Sesi"
   },
   "members": {
     "roleSaved": "{name} sekarang menjadi {role}",

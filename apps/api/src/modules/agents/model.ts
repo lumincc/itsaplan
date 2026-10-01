@@ -89,13 +89,15 @@ export type ChatPart =
 
 // One message of a conversation. Only user and assistant turns are returned; a tool
 // turn is folded into the parts of the turn that called it. `stopped` marks an answer
-// the member ended part-way.
+// the member ended part-way. `hasTranscript` marks an answer whose raw output was
+// recorded by the runner, viewable through the transcript route.
 export type ChatMessageDTO = {
   id: string;
   role: 'user' | 'assistant';
   parts: ChatPart[];
   createdAt: string;
   stopped?: boolean;
+  hasTranscript?: boolean;
 };
 
 export type ChatMessagePage = {

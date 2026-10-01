@@ -9,6 +9,7 @@ import { InputGroupButton } from '@/components/ui/input-group';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { AiChatSessionBadge } from '../shared/AiChatSessionBadge';
+import { AiChatSessionReset } from '../shared/AiChatSessionReset';
 import { AiChatThread } from '../shared/AiChatThread';
 import { ChatPanelAgentSwitcher } from './ChatPanelAgentSwitcher';
 import { ChatPanelHistory } from './ChatPanelHistory';
@@ -104,6 +105,13 @@ export function ChatPanelSession({
               </Tooltip>
             )}
             {thread?.cliSessionId && <AiChatSessionBadge sessionId={thread.cliSessionId} />}
+            {thread?.cliSessionId && session.threadId && (
+              <AiChatSessionReset
+                projectKey={projectKey}
+                agentId={agent.id}
+                threadId={session.threadId}
+              />
+            )}
           </>
         }
         composerEnd={

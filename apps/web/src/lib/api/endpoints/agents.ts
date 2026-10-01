@@ -1,4 +1,4 @@
-import { request } from '@/lib/api/core/client';
+import { ApiError, request } from '@/lib/api/core/client';
 import type { PermissionAction, PermissionResource } from '@/lib/api/endpoints/roles';
 
 // One member custom field an agent reacts to, with the seconds its run waits.
@@ -88,6 +88,12 @@ export interface AgentRun {
   attempts: number;
   lastError: string | null;
   output: string | null;
+  // The coding agent session the run's runner reported with its transcript, when it
+  // did. Absent for runs recorded before this existed and for agents that keep none.
+  cliSessionId?: string | null;
+  // Whether the run's raw output was recorded, which is what makes its transcript
+  // viewable.
+  hasTranscript?: boolean;
   // What the last model call of the run read and wrote: absent for a run that finished
   // before this was recorded and for one whose agent reports no counts.
   contextTokens?: number;
@@ -98,6 +104,18 @@ export interface AgentRun {
 export interface AgentRunPage {
   items: AgentRun[];
   nextCursor: number | null;
+}
+
+// One segment of a raw transcript — the output of one chat answer or one agent run as
+// its coding agent wrote it, with no projection over it. `nextSeq` names the segment
+// behind this one, when there is one.
+export interface AiTranscriptPage {
+  harness: string;
+  seq: number;
+  lines: string[];
+  lineCount: number;
+  byteSize: number;
+  nextSeq: number | null;
 }
 
 // One work-item tool from the server-side catalog. `key` is stored on the agent
@@ -203,3 +221,18 @@ export const listAgentRuns = (teamId: number, agentId: number, before?: number) 
   request<AgentRunPage>(
     `/teams/${teamId}/ai-agents/${agentId}/runs?limit=25${before ? `&before=${before}` : ''}`,
   );
+
+// One segment of a run's raw transcript after `after`. Null when the run has none past
+// it.
+export const getAiAgentRunTranscript = (
+  teamId: number,
+  agentId: number,
+  runId: number,
+  after: number | null,
+) =>
+  request<AiTranscriptPage>(
+    `/teams/${teamId}/ai-agents/${agentId}/runs/${runId}/transcript?after=${after ?? 0}`,
+  ).catch((err) => {
+    if (err instanceof ApiError && err.status === 404) return null;
+    throw err;
+  });

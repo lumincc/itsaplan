@@ -5,6 +5,7 @@ import { answer } from './chat';
 import { Client, RequestError, type ChatMessage, type Run } from './client';
 import { loadConfig, type RunnerConfig } from './config';
 import { execute } from './execute';
+import { TranscriptRecorder } from './transcript';
 
 // The runner holds no state — the queue is the server's — so stopping it mid-task only
 // means that task's lease expires and another runner picks it up.
@@ -56,14 +57,25 @@ function taskOf(run: Run) {
 async function handle(config: RunnerConfig, client: Client, log: Log, run: Run): Promise<void> {
   const label = run.issueIdentifier ?? `run ${run.id}`;
   log(`${label}: started (${run.trigger})`);
+  // Read as the command writes, not off the outcome: only the tail of the output is
+  // kept, and the line carrying the counts can fall outside it.
+  const usage = new UsageReader(config.outputFormat);
+  const transcript = new TranscriptRecorder(
+    config.outputFormat,
+    (segment) => client.runTranscript(run.id, { harness: config.outputFormat, ...segment }),
+    (message) => log(`${label}: ${message}`),
+    run.transcriptSeq,
+  );
   try {
-    // Read as the command writes, not off the outcome: only the tail of the output is
-    // kept, and the line carrying the counts can fall outside it.
-    const usage = new UsageReader(config.outputFormat);
     const outcome = await withHeartbeat(
       log,
       () => client.heartbeat(run.id),
-      execute(config, taskOf(run), { onData: (chunk) => usage.write(chunk) }),
+      execute(config, taskOf(run), {
+        onData: (chunk) => {
+          usage.write(chunk);
+          transcript.write(chunk);
+        },
+      }),
     );
     usage.end();
     await client.report(run.id, { ...outcome, usage: usage.value() });
@@ -74,6 +86,11 @@ async function handle(config: RunnerConfig, client: Client, log: Log, run: Run):
     const message = err instanceof Error ? err.message : String(err);
     log(`${label}: runner error — ${message}`);
     await client.report(run.id, { status: 'failed', error: message }).catch(() => {});
+  } finally {
+    // The last segment may carry the session the run used; what was written before a
+    // failure is worth keeping too. A failed upload is logged by the recorder and
+    // changes nothing above.
+    await transcript.close();
   }
 }
 

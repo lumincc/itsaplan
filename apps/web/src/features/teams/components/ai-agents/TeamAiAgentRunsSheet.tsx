@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import type { AgentRun, AiAgent } from '@/lib/api/endpoints/agents';
+import { getAiAgentRunTranscript } from '@/lib/api/endpoints/agents';
 import { useRelativeTime } from '@/context/relativeTimeContext';
 import { formatDateTime } from '@/utils/dates';
 import { useAgentRuns } from '@/services/aiAgents.service';
 import { AgentContextSize } from '@/components/common/agent-chat/AgentContextSize';
+import { RawTranscriptViewer } from '@/components/common/RawTranscriptViewer';
 import ListSkeleton from '@/components/common/skeleton/ListSkeleton';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -49,7 +51,8 @@ export function TeamAiAgentRunsSheet({
 function RunsList({ agentId }: { agentId: number }) {
   const t = useTranslations('teams.agents');
   const tCommon = useTranslations('common');
-  const query = useAgentRuns(useAgentSection().teamId, agentId);
+  const teamId = useAgentSection().teamId;
+  const query = useAgentRuns(teamId, agentId);
   const runs = query.data?.pages.flatMap((p) => p.items) ?? [];
 
   if (query.isLoading) {
@@ -63,7 +66,7 @@ function RunsList({ agentId }: { agentId: number }) {
     <div className="min-h-0 flex-1 overflow-y-auto">
       <div className="divide-y divide-border/50">
         {runs.map((r) => (
-          <RunItem key={r.id} run={r} />
+          <RunItem key={r.id} run={r} teamId={teamId} agentId={agentId} />
         ))}
       </div>
       <div className="p-4">
@@ -93,10 +96,11 @@ function runSubject(r: AgentRun, t: ReturnType<typeof useTranslations<'teams.age
   return `${r.issueIdentifier}${r.issueTitle ? ` · ${r.issueTitle}` : ''}`;
 }
 
-function RunItem({ run: r }: { run: AgentRun }) {
+function RunItem({ run: r, teamId, agentId }: { run: AgentRun; teamId: number; agentId: number }) {
   const t = useTranslations('teams.agents');
   const relativeTime = useRelativeTime();
   const [open, setOpen] = useState(false);
+  const [showTranscript, setShowTranscript] = useState(false);
   const subject = runSubject(r, t);
   const outcome = r.status === 'failed' ? (r.lastError ?? t('failed')) : '';
   return (
@@ -136,6 +140,7 @@ function RunItem({ run: r }: { run: AgentRun }) {
             <DetailBlock label={t('error')} value={r.lastError} />
           )}
           {r.output && <DetailBlock label={t('result')} value={r.output} />}
+          {r.cliSessionId && <DetailBlock label={t('session')} value={r.cliSessionId} />}
           {r.status === 'pending' && (
             <DetailBlock
               label={t('queue')}
@@ -143,6 +148,28 @@ function RunItem({ run: r }: { run: AgentRun }) {
             />
           )}
           {outcome && <p className="text-xs text-muted-foreground">{outcome}</p>}
+          {r.hasTranscript && (
+            <div className="space-y-1.5">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 gap-1.5 px-2 text-xs text-muted-foreground"
+                onClick={() => setShowTranscript((v) => !v)}
+              >
+                {showTranscript ? (
+                  <ChevronDown className="size-3.5" />
+                ) : (
+                  <ChevronRight className="size-3.5" />
+                )}
+                {t('transcript')}
+              </Button>
+              {showTranscript && (
+                <RawTranscriptViewer
+                  load={(after) => getAiAgentRunTranscript(teamId, agentId, r.id, after)}
+                />
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>

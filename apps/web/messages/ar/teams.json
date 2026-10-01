@@ -515,7 +515,9 @@
     "noProjectsShort": "لا توجد مشاريع",
     "chatNeedsAgent": "أنشئ وكيل الذكاء الاصطناعي لتجربته هنا.",
     "chatNeedsProject": "أضف وكيل الذكاء الاصطناعي إلى مشروع لتجربته هنا.",
-    "triggerFieldsTitle": "الحقول المخصصة التي تبدأ تشغيلاً"
+    "triggerFieldsTitle": "الحقول المخصصة التي تبدأ تشغيلاً",
+    "transcript": "السجل الخام",
+    "session": "الجلسة"
   },
   "members": {
     "roleSaved": "{name} الآن {role}",

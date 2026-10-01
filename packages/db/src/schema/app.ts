@@ -597,6 +597,9 @@ export const agentRun = pgTable(
     // the run history shows nothing for either.
     inputTokens: integer('input_tokens'),
     outputTokens: integer('output_tokens'),
+    // The coding agent session this run used, reported by its runner with the
+    // transcript. Null until one is reported, and for a runner that keeps no sessions.
+    cliSessionId: text('cli_session_id'),
     startedAt: timestamp('started_at', { withTimezone: true }),
     finishedAt: timestamp('finished_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -700,6 +703,36 @@ export const agentChatEvent = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index('agent_chat_event_message_idx').on(t.messageId, t.id)],
+);
+
+// One segment of the raw output stream of a chat answer or an agent run, as the coding
+// agent wrote it: the lines are stored verbatim (JSONL for every harness the runner
+// knows, plain text otherwise), gzipped, in the object store. This row is the index:
+// which scope the segment belongs to, the harness that wrote it, its position in the
+// stream, and how to find and verify the bytes. Segments are never truncated and never
+// expire; a re-upload of the same (scope, seq) is ignored, which makes the runner's
+// retries safe.
+export const agentTranscriptSegment = pgTable(
+  'agent_transcript_segment',
+  {
+    id: serial('id').primaryKey(),
+    runId: integer('run_id').references(() => agentRun.id, { onDelete: 'cascade' }),
+    messageId: integer('message_id').references(() => agentChatMessage.id, {
+      onDelete: 'cascade',
+    }),
+    harness: text('harness').notNull(),
+    seq: integer('seq').notNull(),
+    lineCount: integer('line_count').notNull(),
+    byteSize: integer('byte_size').notNull(),
+    storageKey: text('storage_key').notNull(),
+    sha256: text('sha256').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    check('agent_transcript_scope_check', sql`num_nonnulls(${t.runId}, ${t.messageId}) = 1`),
+    uniqueIndex('agent_transcript_run_seq_uq').on(t.runId, t.seq),
+    uniqueIndex('agent_transcript_message_seq_uq').on(t.messageId, t.seq),
+  ],
 );
 
 // The token counts of the last completed answer of one chat thread, which is what the

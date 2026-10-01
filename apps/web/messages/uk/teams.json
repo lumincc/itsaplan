@@ -515,7 +515,9 @@
     "noProjectsShort": "Немає проєктів",
     "chatNeedsAgent": "Створіть ШІ-агента, щоб протестувати його тут.",
     "chatNeedsProject": "Додайте ШІ-агента до проєкту, щоб протестувати його тут.",
-    "triggerFieldsTitle": "Кастомні поля, що запускають run"
+    "triggerFieldsTitle": "Кастомні поля, що запускають run",
+    "transcript": "Повний журнал",
+    "session": "Сесія"
   },
   "members": {
     "roleSaved": "{name} тепер {role}",

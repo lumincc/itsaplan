@@ -120,7 +120,8 @@
     "importConfirmed": "{count, plural, one {Membuat # issue} other {Membuat # issue}}",
     "importSkippedRow": "Baris dilewati {row}: {reason}",
     "contextSize": "Konteks percakapan: {count, plural, one {# token} other {# token}}",
-    "contextUnavailable": "Ukuran konteks tidak tersedia untuk agen ini"
+    "contextUnavailable": "Ukuran konteks tidak tersedia untuk agen ini",
+    "rawTranscript": "Transkrip mentah"
   },
   "share": {
     "createFailed": "Gagal membuat tautan. Coba lagi.",
@@ -211,5 +212,13 @@
     "page": "Halaman {number}",
     "perPage": "per halaman",
     "range": "{first}-{last} dari {total}"
+  },
+  "transcript": {
+    "segment": "segmen {seq} · {count, plural, other {# baris}}",
+    "loadMore": "Muat lagi",
+    "end": "Akhir transkrip",
+    "empty": "Tidak ada transkrip yang terekam.",
+    "loading": "Memuat…",
+    "loadFailed": "Tidak dapat memuat transkrip."
   }
 }

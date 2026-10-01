@@ -2,6 +2,7 @@ import { db, agentRun, issue, project } from '@repo/db';
 import { and, desc, eq, gt, inArray, isNotNull, lt, sql } from 'drizzle-orm';
 import { intEnv, iso } from '#shared/lib';
 import type { AgentRunTrigger } from '../model';
+import { runsWithTranscript } from '../transcript/service';
 
 // The agent_run outbox: data access for triggered runs and run history. The api's
 // run poller claims pending rows, runs them, and records the outcome.
@@ -257,6 +258,10 @@ export interface AgentRunRow {
   // What the run produced: the runtime's reply, or whatever the runner's command
   // printed. Null until the run finishes.
   output: string | null;
+  // The coding agent session the run's runner reported with its transcript.
+  cliSessionId: string | null;
+  // Whether the run's raw output was recorded by its runner.
+  hasTranscript?: boolean;
   contextTokens?: number;
   nextAttemptAt: string;
   createdAt: string;
@@ -301,6 +306,7 @@ export async function listAgentRuns(
       attempts: agentRun.attempts,
       lastError: agentRun.lastError,
       output: agentRun.output,
+      cliSessionId: agentRun.cliSessionId,
       inputTokens: agentRun.inputTokens,
       outputTokens: agentRun.outputTokens,
       nextAttemptAt: agentRun.nextAttemptAt,
@@ -323,6 +329,7 @@ export async function listAgentRuns(
     .limit(limit + 1);
   const hasMore = rows.length > limit;
   const page = hasMore ? rows.slice(0, limit) : rows;
+  const transcripts = await runsWithTranscript(page.map((r) => r.id));
   return {
     items: page.map((r) => ({
       id: r.id,
@@ -335,6 +342,8 @@ export async function listAgentRuns(
       attempts: r.attempts,
       lastError: r.lastError,
       output: r.output,
+      cliSessionId: r.cliSessionId,
+      ...(transcripts.has(r.id) ? { hasTranscript: true } : {}),
       ...contextTokensOf(r),
       nextAttemptAt: iso(r.nextAttemptAt),
       createdAt: iso(r.createdAt),
